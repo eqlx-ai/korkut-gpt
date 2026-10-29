@@ -4,10 +4,19 @@ version = "0.1.0"
 description = "A tiny character-level language model trained from scratch on the Book of Dede Korkut"
 authors = [{ name = "Can Demir", email = "eqlx.ai@gmail.com" }]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "torch>=2.15.0",
+]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
 
 [tool.ruff]
 line-length = 100
