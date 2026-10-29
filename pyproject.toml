@@ -1,0 +1,22 @@
+[project]
+name = "korkut-gpt"
+version = "0.1.0"
+description = "A tiny character-level language model trained from scratch on the Book of Dede Korkut"
+authors = [{ name = "Can Demir", email = "eqlx.ai@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
