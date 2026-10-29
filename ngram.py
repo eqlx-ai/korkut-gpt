@@ -87,9 +87,27 @@ def main() -> None:
     ap.add_argument("--len", type=int, default=240, help="letters to write")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--prompt", default="hânum hey\n")
+    ap.add_argument("--seeds", type=int, help="average the copy measures over this many samples")
     args = ap.parse_args()
 
     train, held_out = load()
+    if args.seeds:
+        print(
+            f"copy measures, mean over {args.seeds} samples of {args.len} letters (seeds 1..{args.seeds})"
+        )
+        for n in [args.n] if args.n else range(1, 9):
+            model = NGram(train, n)
+            texts = [
+                model.sample(args.len, random.Random(s), args.prompt)
+                for s in range(1, args.seeds + 1)
+            ]
+            share = sum(copied_share(t, train) for t in texts) / len(texts)
+            longest = [len(longest_copy(t, train)) for t in texts]
+            print(
+                f"n={n}: 20-letter pieces in the book {share:.0%}, longest copy "
+                f"mean {sum(longest) / len(longest):.0f} letters (min {min(longest)}, max {max(longest)})"
+            )
+        return
     print(
         f"book: {len(train)} letters to learn from, Deli Dumrul held out: {len(held_out)} letters"
     )
