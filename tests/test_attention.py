@@ -54,3 +54,10 @@ def test_generate_goes_past_the_window():
     model = attention.AttentionLanguageModel()
     out = model.generate(torch.zeros((1, 1), dtype=torch.long), attention.block_size + 5)
     assert out.shape == (1, attention.block_size + 6)
+
+
+def test_show_matrix_fits_a_short_window(capsys, monkeypatch):
+    monkeypatch.setattr(attention, "block_size", 8)
+    model = attention.AttentionLanguageModel()
+    attention.show_matrix(model, attention.WINDOW)
+    assert len(capsys.readouterr().out.splitlines()) == 7

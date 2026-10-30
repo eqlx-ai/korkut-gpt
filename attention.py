@@ -175,6 +175,7 @@ def show_attention(model, text: str, top: int = 5) -> None:
 @torch.no_grad()
 def show_matrix(model, text: str, last: int = 6) -> None:
     """The head's attention table for the last `last` letters of `text`: row looks at column."""
+    text = text[-block_size:]  # the model has only block_size positions
     model(torch.tensor([encode(text)], dtype=torch.long))
     wei = model.sa_head.last_wei[0, -last:, -last:]
     letters = [repr(c)[1:-1] for c in text[-last:]]
