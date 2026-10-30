@@ -31,6 +31,7 @@ eval_interval = 300
 eval_iters = 200
 learning_rate = 1e-2
 use_position = True
+WINDOW = "örelüm nece yalvarmış eydür\nyüce"  # a window from Deli Dumrul, ends in "yüce"
 
 # --- data and tokenizer: the same as bigram.py ------------------------------------------------
 boys = sorted((DATA / "boys").glob("*.txt"))
@@ -172,6 +173,27 @@ def show_attention(model, text: str, top: int = 5) -> None:
 
 
 @torch.no_grad()
+def show_matrix(model, text: str, last: int = 6) -> None:
+    """The head's attention table for the last `last` letters of `text`: row looks at column."""
+    model(torch.tensor([encode(text)], dtype=torch.long))
+    wei = model.sa_head.last_wei[0, -last:, -last:]
+    letters = [repr(c)[1:-1] for c in text[-last:]]
+    print("      " + "".join(f"{c:>5}" for c in letters))
+    for c, row in zip(letters, wei.tolist()):
+        print(f"{c:>5} " + "".join(f"{w:5.0%}" if w > 0 else "    ." for w in row))
+
+
+@torch.no_grad()
+def show_next(model, words: list[str], top: int = 3) -> None:
+    """The model's most likely next letters after each word."""
+    for w in words:
+        logits, _ = model(torch.tensor([encode(w)], dtype=torch.long))
+        probs = F.softmax(logits[0, -1], dim=-1)
+        best = probs.argsort(descending=True)[:top].tolist()
+        print(f"  after {w!r}: " + ", ".join(f"{itos[i]!r} {probs[i].item():.0%}" for i in best))
+
+
+@torch.no_grad()
 def attention_by_distance(model, n_batches: int = 50) -> list[float]:
     """Average share of attention the last letter of a full window gives to 0, 1, 2... letters back."""
     model.eval()
@@ -219,6 +241,9 @@ def main() -> None:
     print(f"softmax of [1, 2, 3]:     {F.softmax(torch.tensor([1.0, 2, 3]), -1).tolist()}")
     print(f"softmax of [1, 2, 3] * 8: {F.softmax(torch.tensor([1.0, 2, 3]) * 8, -1).tolist()}")
 
+    print("\n--- the head before training, last 6 letters of a Deli Dumrul window ---")
+    show_matrix(model, WINDOW)
+
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     losses = {}
     print()
@@ -249,6 +274,11 @@ def main() -> None:
     for _ in range(6):
         x, _ = get_batch("val")
         show_attention(model, decode(x[0].tolist()))
+
+    print("\n--- the head after training, the same 6 letters ---")
+    show_matrix(model, WINDOW)
+    print("\n--- same letters, other order: what comes next? ---")
+    show_next(model, ["kalem", "kelam"])
 
 
 if __name__ == "__main__":
