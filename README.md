@@ -5,6 +5,8 @@ A tiny language model trained from scratch, letter by letter, on the Book of Ded
 
 ```bash
 uv run python prepare.py   # download and clean the text -> data/korkut.txt
+uv run python bigram.py     # episode 1: the bigram network
+uv run python attention.py  # episode 2: one head of self-attention
 uv run pytest
 ```
 
