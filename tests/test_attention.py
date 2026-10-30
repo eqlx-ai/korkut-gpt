@@ -61,3 +61,9 @@ def test_show_matrix_fits_a_short_window(capsys, monkeypatch):
     model = attention.AttentionLanguageModel()
     attention.show_matrix(model, attention.WINDOW)
     assert len(capsys.readouterr().out.splitlines()) == 7
+
+
+def test_loss_by_position_has_one_value_per_position():
+    model = attention.AttentionLanguageModel()
+    bits = attention.loss_by_position(model, n_batches=2)
+    assert len(bits) == attention.block_size

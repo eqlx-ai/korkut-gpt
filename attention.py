@@ -209,6 +209,20 @@ def attention_by_distance(model, n_batches: int = 50) -> list[float]:
     return (shares / n_batches).tolist()
 
 
+@torch.no_grad()
+def loss_by_position(model, n_batches: int = 200) -> list[float]:
+    """Deli Dumrul loss in bits at each position of the window: position 0 sees one letter."""
+    model.eval()
+    total = torch.zeros(block_size)
+    for _ in range(n_batches):
+        x, y = get_batch("val")
+        logits, _ = model(x)
+        loss = F.cross_entropy(logits.transpose(1, 2), y, reduction="none")  # (B, T)
+        total += loss.mean(dim=0)
+    model.train()
+    return (total / n_batches / math.log(2)).tolist()
+
+
 def main() -> None:
     global block_size, use_position
     parser = argparse.ArgumentParser()
@@ -280,6 +294,21 @@ def main() -> None:
     show_matrix(model, WINDOW)
     print("\n--- same letters, other order: what comes next? ---")
     show_next(model, ["kalem", "kelam"])
+
+    print("\n--- Deli Dumrul loss by position in the window, bits per letter ---")
+    bits = loss_by_position(model)
+    for t in (0, 1, 2, 3, 7):
+        print(f"  position {t:2d} (sees {t + 1} letters): {bits[t]:.2f}")
+    first = sum(bits[:8]) / 8
+    print(
+        f"  positions 0-7: {first:.2f}"
+        + (
+            f", positions 8-{block_size - 1}: {sum(bits[8:]) / (block_size - 8):.2f}"
+            if block_size > 8
+            else ""
+        )
+    )
+    print(f"  all positions: {sum(bits) / block_size:.2f}")
 
 
 if __name__ == "__main__":
